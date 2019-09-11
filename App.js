@@ -3,6 +3,7 @@ import { StyleSheet, View,ScrollView,Dimensions,Modal ,TouchableHighlight} from 
 import {Container,Card,CardItem,Body,Text,Content,Button,Input} from 'native-base';
 import {AppLoading} from 'expo';
 import {Alert} from "react-native-web";
+import {request_view} from "./request/request_view";
 
 const {height} = Dimensions.get('window');
 export default class App extends Component {
@@ -14,7 +15,9 @@ export default class App extends Component {
       contentHeight : height,
       loading : true,
       modalVisible: false,
-      createModalVisible : false
+      createModalVisible : false,
+
+      listOfUser : [],
     }
   }
 
@@ -43,8 +46,19 @@ export default class App extends Component {
       'Roboto_medium': require('native-base/Fonts/Roboto_medium.ttf'),
     });
     this.setState({ loading: false });
+
+    request_view().then(data => {
+       return this.setState({listOfUser:data});
+    });
+
   }
-//
+
+
+  componentDidMount() {
+    console.log(this.state.listOfUser);
+  };
+
+
   createModal = () => {
     return(
         <Modal
@@ -103,6 +117,32 @@ export default class App extends Component {
     );
   };
 
+  ListOfUser = () => {
+
+    return this.state.listOfUser.map((listUser) =>
+
+      <Card key={listUser.id}>
+
+        <CardItem header bordered>
+          <Text>Name : {listUser.name}</Text>
+        </CardItem>
+        <CardItem header bordered>
+          <Text>Age : {listUser.age}</Text>
+        </CardItem>
+        <CardItem header bordered>
+          <Text>Address : {listUser.address}</Text>
+        </CardItem>
+        <CardItem footer bordered style={{justifyContent:'space-around'}}>
+          <Button onPress={() => this.setModalVisible('update',true)}><Text>Update</Text></Button>
+
+          <Button onPress={()=>console.log(this.state.listOfUser)}><Text>Delete</Text></Button>
+        </CardItem>
+      </Card>
+
+    )
+
+  };
+
   render(){
     if (this.state.loading) {
       return <AppLoading
@@ -115,24 +155,7 @@ export default class App extends Component {
           <ScrollView onContentSizeChange={this.onContentSizeChange}>
             <Content>
               <View style={styles.containerScroll}>
-
-                <Card>
-
-                  <CardItem header bordered>
-                    <Text>Name : SYAFIQ</Text>
-                  </CardItem>
-                  <CardItem header bordered>
-                    <Text>Age : </Text>
-                  </CardItem>
-                  <CardItem header bordered>
-                    <Text>Address : </Text>
-                  </CardItem>
-                  <CardItem footer bordered style={{justifyContent:'space-around'}}>
-                    <Button onPress={() => this.setModalVisible('update',true)}><Text>Update</Text></Button>
-
-                    <Button><Text>Delete</Text></Button>
-                  </CardItem>
-                </Card>
+                {this.ListOfUser()}
               </View>
             </Content>
           </ScrollView>
@@ -162,3 +185,5 @@ const styles = StyleSheet.create({
     marginTop:30,
   },
 });
+
+
