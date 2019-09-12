@@ -5,6 +5,9 @@ import {AppLoading} from 'expo';
 import {Alert} from "react-native-web";
 import {request_view} from "./request/request_view";
 import {request_create} from "./request/request_create";
+import {request_read} from "./request/request_read";
+import {request_update} from "./request/request_update";
+import {request_delete} from "./request/request_delete";
 
 const {height} = Dimensions.get('window');
 export default class App extends Component {
@@ -20,20 +23,47 @@ export default class App extends Component {
 
       listOfUser : [],
 
+      id : '',
       createName : '',
       createAge : '',
       createAddress : '',
     }
   }
 
-  setModalVisible(modalType,visible) {
+  setModalVisible(modalType,visible,id) {
 
     if(modalType === 'create')
     {
       this.setState({createModalVisible: visible});
     }
     if(modalType === 'update'){
-      this.setState({modalVisible: visible});
+
+      if(this.state.modalVisible === true){
+        return this.setState({modalVisible:false});
+      }
+
+      if(this.state.modalVisible === false){
+
+        request_read(id).then(res=>{
+
+
+          return this.setState({
+            modalVisible:true,
+            id : res[0].id,
+            createName : res[0].name,
+            createAge : res[0].age,
+            createAddress : res[0].address,
+          });
+
+
+        });
+
+        return this.setState({modalVisible:true});
+      }
+
+
+
+
     }
   }
 
@@ -53,7 +83,7 @@ export default class App extends Component {
     this.setState({ loading: false });
 
     request_view().then(data => {
-       return this.setState({listOfUser:data});
+      return this.setState({listOfUser:data});
     });
 
   }
@@ -94,42 +124,42 @@ export default class App extends Component {
                 </CardItem>
                 <CardItem header bordered style={{justifyContent:'space-around'}}>
                   <Button onPress={() =>
-                      {
+                  {
 
-                        const s = this.state;
+                    const s = this.state;
 
-                        if(s.createName === '' || s.createAge === '' || s.createAddress === ''){
+                    if(s.createName === '' || s.createAge === '' || s.createAddress === ''){
 
-                          alert("Please fill the box!");
+                      alert("Please fill the box!");
 
-                        } else {
+                    } else {
 
-                        request_create(s.createName,s.createAge,s.createAddress).then(result =>{
+                      request_create(s.createName,s.createAge,s.createAddress).then(result =>{
 
-                          // console.log(result);
+                        // console.log(result);
 
-                          if(result.status === 'error'){
+                        if(result.status === 'error'){
+                          alert(result.msg);
+                        }else {
+
+                          request_view().then(data => {
+
+                            this.setModalVisible('create',!this.state.createModalVisible);
                             alert(result.msg);
-                          }else {
 
-                            request_view().then(data => {
-
-                              this.setModalVisible('create',!this.state.createModalVisible);
-                              alert(result.msg);
-
-                              return this.setState({
-                                listOfUser:data,
-                                createName:'',
-                                createAge:'',
-                                createAddress:''
-                              });
+                            return this.setState({
+                              listOfUser:data,
+                              createName:'',
+                              createAge:'',
+                              createAddress:''
                             });
+                          });
 
-                          }
+                        }
 
-                        })
+                      })
 
-                      }}
+                    }}
                   }
 
                   ><Text>Create</Text></Button>
@@ -156,11 +186,69 @@ export default class App extends Component {
               return this.setState({modalVisible: false});
             }}>
           <View style={styles.containerScroll}>
-            <View>
-              <Text>Hello World!</Text>
-              <Button onPress={() => {
-                this.setModalVisible('update',!this.state.modalVisible);
-              }}><Text>Close Modal</Text></Button>
+            <View style={styles.containerScroll}>
+
+              <Card>
+                <CardItem header bordered>
+                  <Text>Name :</Text><Input
+                    onChangeText={text => this.setState({createName: text})}
+                    value={this.state.createName}
+                />
+                </CardItem>
+                <CardItem header bordered>
+                  <Text>Age :</Text><Input
+                    onChangeText={text => this.setState({createAge: text})}
+                    value={this.state.createAge}
+                />
+                </CardItem>
+                <CardItem header bordered>
+                  <Text>Address :</Text><Input
+                    onChangeText={text => this.setState({createAddress: text})}
+                    value={this.state.createAddress}
+                />
+                </CardItem>
+                <CardItem header bordered style={{justifyContent:'space-around'}}>
+                  <Button onPress={() =>
+                  {
+
+                    const val = this.state;
+
+                    request_update(val.id,val.createName,val.createAge,val.createAddress).then(res=>{
+
+                      if(res.status === 'success')
+                      {
+
+                        request_view().then(data => {
+
+                          alert(res.msg);
+                          return this.setState({
+                            modalVisible: false,
+                            id : '',
+                            createName : '',
+                            createAge : '',
+                            createAddress : '',
+                            listOfUser : data,
+
+                          })
+
+                        });
+
+
+                      }
+
+                    });
+
+                  }
+                  }
+
+                  ><Text>Update</Text></Button>
+                  <Button onPress={() => {
+                    this.setModalVisible('update',!this.state.modalVisible);
+                  }}><Text>Close Modal</Text></Button>
+                </CardItem>
+              </Card>
+
+
             </View>
           </View>
         </Modal>
@@ -171,23 +259,40 @@ export default class App extends Component {
 
     return this.state.listOfUser.map((listUser) =>
 
-      <Card key={listUser.id}>
+        <Card key={listUser.id}>
 
-        <CardItem header bordered>
-          <Text>Name : {listUser.name}</Text>
-        </CardItem>
-        <CardItem header bordered>
-          <Text>Age : {listUser.age}</Text>
-        </CardItem>
-        <CardItem header bordered>
-          <Text>Address : {listUser.address}</Text>
-        </CardItem>
-        <CardItem footer bordered style={{justifyContent:'space-around'}}>
-          <Button onPress={() => this.setModalVisible('update',true)}><Text>Update</Text></Button>
+          <CardItem header bordered>
+            <Text>Name : {listUser.name}</Text>
+          </CardItem>
+          <CardItem header bordered>
+            <Text>Age : {listUser.age}</Text>
+          </CardItem>
+          <CardItem header bordered>
+            <Text>Address : {listUser.address}</Text>
+          </CardItem>
+          <CardItem footer bordered style={{justifyContent:'space-around'}}>
+            <Button onPress={() => this.setModalVisible('update',true,listUser.id)}><Text>Update</Text></Button>
 
-          <Button onPress={()=>console.log(this.state.listOfUser)}><Text>Delete</Text></Button>
-        </CardItem>
-      </Card>
+            <Button onPress={()=>{
+
+              request_delete(listUser.id).then(res => {
+                if(res.status === 'success'){
+
+                  request_view().then(data=>{
+                    return this.setState({
+                      listOfUser : data
+                    });
+                  });
+
+                }
+                else{
+                  alert(res.msg);
+                }
+              });
+
+            }}><Text>Delete</Text></Button>
+          </CardItem>
+        </Card>
 
     )
 

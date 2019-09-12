@@ -1,7 +1,7 @@
 import requestBluePrint from './requestBluePrint';
 import API from '../API';
 
-export function request_delete(id)
+export function request_read(id)
 {
 
     const data = JSON.stringify({
@@ -10,5 +10,5 @@ export function request_delete(id)
 
     });
 
-    return requestBluePrint(data, API.request_delete).then((res)=> res);
+    return requestBluePrint(data, API.request_read).then((res)=> res);
 }
