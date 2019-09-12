@@ -4,6 +4,7 @@ import {Container,Card,CardItem,Body,Text,Content,Button,Input} from 'native-bas
 import {AppLoading} from 'expo';
 import {Alert} from "react-native-web";
 import {request_view} from "./request/request_view";
+import {request_create} from "./request/request_create";
 
 const {height} = Dimensions.get('window');
 export default class App extends Component {
@@ -18,6 +19,10 @@ export default class App extends Component {
       createModalVisible : false,
 
       listOfUser : [],
+
+      createName : '',
+      createAge : '',
+      createAddress : '',
     }
   }
 
@@ -55,7 +60,7 @@ export default class App extends Component {
 
 
   componentDidMount() {
-    console.log(this.state.listOfUser);
+    // console.log(this.state.listOfUser);
   };
 
 
@@ -66,23 +71,68 @@ export default class App extends Component {
             transparent={false}
             visible={this.state.createModalVisible}
             onRequestClose={() => {
-              console.log('BB');
+              return this.setState({createModalVisible : false});
             }}>
           <View style={styles.containerScroll}>
             <View style={styles.containerScroll}>
 
               <Card>
                 <CardItem header bordered>
-                  <Text>Name :</Text><Input/>
+                  <Text>Name :</Text><Input
+                    onChangeText={text => this.setState({createName: text})}
+                />
                 </CardItem>
                 <CardItem header bordered>
-                  <Text>Age :</Text><Input/>
+                  <Text>Age :</Text><Input
+                    onChangeText={text => this.setState({createAge: text})}
+                />
                 </CardItem>
                 <CardItem header bordered>
-                  <Text>Address :</Text><Input/>
+                  <Text>Address :</Text><Input
+                    onChangeText={text => this.setState({createAddress: text})}
+                />
                 </CardItem>
                 <CardItem header bordered style={{justifyContent:'space-around'}}>
-                  <Button><Text>Create</Text></Button>
+                  <Button onPress={() =>
+                      {
+
+                        const s = this.state;
+
+                        if(s.createName === '' || s.createAge === '' || s.createAddress === ''){
+
+                          alert("Please fill the box!");
+
+                        } else {
+
+                        request_create(s.createName,s.createAge,s.createAddress).then(result =>{
+
+                          // console.log(result);
+
+                          if(result.status === 'error'){
+                            alert(result.msg);
+                          }else {
+
+                            request_view().then(data => {
+
+                              this.setModalVisible('create',!this.state.createModalVisible);
+                              alert(result.msg);
+
+                              return this.setState({
+                                listOfUser:data,
+                                createName:'',
+                                createAge:'',
+                                createAddress:''
+                              });
+                            });
+
+                          }
+
+                        })
+
+                      }}
+                  }
+
+                  ><Text>Create</Text></Button>
                   <Button onPress={() => {
                     this.setModalVisible('create',!this.state.createModalVisible);
                   }}><Text>Close Modal</Text></Button>
